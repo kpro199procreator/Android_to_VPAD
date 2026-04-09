@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+  packages: read   # necesario para pull de ghcr.io
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,8 +21,40 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Login a ghcr.io — los paquetes de wiiu-env/* requieren autenticación
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Cache de capas Docker para no re-descargar devkitPPC/wut/wups en cada run
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build Docker image
-        run: docker build . -t atv-builder
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: atv-builder:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # Evitar crecimiento infinito del cache
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Compile plugin
         run: docker run --rm -v ${{ github.workspace }}:/project atv-builder make
@@ -32,9 +71,44 @@ jobs:
     needs: build
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          tags: atv-builder:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+
+      - name: Compile plugin (DEBUG)
+        run: docker run --rm -v ${{ github.workspace }}:/project atv-builder make DEBUG=1
+
+      - name: Upload debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android_to_vpad_debug.wps
+          path: android_to_vpad.wps
+          if-no-files-found: error      - name: Build Docker image
         run: docker build . -t atv-builder
 
       - name: Compile plugin (DEBUG)
