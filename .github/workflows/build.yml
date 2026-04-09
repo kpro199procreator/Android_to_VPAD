@@ -1,0 +1,47 @@
+name: Build android_to_vpad
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build . -t atv-builder
+
+      - name: Compile plugin
+        run: docker run --rm -v ${{ github.workspace }}:/project atv-builder make
+
+      - name: Upload .wps artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android_to_vpad.wps
+          path: android_to_vpad.wps
+          if-no-files-found: error
+
+  build-debug:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build . -t atv-builder
+
+      - name: Compile plugin (DEBUG)
+        run: docker run --rm -v ${{ github.workspace }}:/project atv-builder make DEBUG=1
+
+      - name: Upload debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android_to_vpad_debug.wps
+          path: android_to_vpad.wps
