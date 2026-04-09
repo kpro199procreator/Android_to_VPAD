@@ -36,4 +36,9 @@ LIBDIRS := $(WUPSDIR) $(WUT_ROOT) $(DEVKITPRO)/portlibs/wiiu
 #-------------------------------------------------------------------------------
 # Reglas WUPS — debe ser la última línea
 #-------------------------------------------------------------------------------
+WUPSDIR ?= $(DEVKITPRO)/wups
+
+ifeq ($(wildcard $(WUPSDIR)/share/wups_rules),)
+$(error WUPSDIR not set or wups_rules not found at $(WUPSDIR)/share/wups_rules)
+endif
 include $(WUPSDIR)/share/wups_rules
