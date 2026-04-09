@@ -9,6 +9,7 @@
 FROM ghcr.io/wiiu-env/devkitppc:20250608
 
 ENV WUPSDIR=/opt/devkitpro/wups
+ENV WUT_ROOT=/opt/devkitpro/wut
 
 COPY --from=ghcr.io/wiiu-env/wiiupluginsystem:20240505  /artifacts $DEVKITPRO
 COPY --from=ghcr.io/wiiu-env/libnotifications:20240426  /artifacts $DEVKITPRO
