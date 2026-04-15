@@ -55,7 +55,7 @@ static volatile uint32_t g_virt_hold    = 0;
 static volatile uint32_t g_virt_trigger = 0;
 static volatile uint32_t g_virt_release = 0;
 static volatile bool     g_has_input    = false;
-static volatile uint32_t g_last_input_time = 0;  // en ticks de OSGetTick
+static volatile uint64_t g_last_input_time = 0;  // ticks de OSGetTime()
 
 // Thread del servidor TCP
 static OSThread  g_serverThread;
@@ -154,7 +154,7 @@ static int serverThreadFunc(int argc, const char **argv)
             g_virt_trigger = ntohl(pkt.trigger);
             g_virt_release = ntohl(pkt.release);
             g_has_input    = true;
-            g_last_input_time = (uint32_t)(OSGetTime() / OSTimerClockSpeed);
+            g_last_input_time = OSGetTime();
         }
 
         socketclose(client);
@@ -301,6 +301,13 @@ DECL_FUNCTION(int32_t, VPADRead,
             memset(buffers, 0, sizeof(VPADStatus) * count);
             if (outError) *outError = VPAD_READ_NO_SAMPLES;
         }
+    }
+
+    if (g_has_input && (OSGetTime() - g_last_input_time) > OSMillisecondsToTicks(ATV_INPUT_TIMEOUT)) {
+        g_has_input = false;
+        g_virt_hold = 0;
+        g_virt_trigger = 0;
+        g_virt_release = 0;
     }
 
     if (!g_enabled || !g_has_input || chan != VPAD_CHAN_0 || count == 0) {

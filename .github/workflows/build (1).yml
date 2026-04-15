@@ -57,7 +57,7 @@ jobs:
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Compile plugin
-        run: docker run --rm -v ${{ github.workspace }}:/project atv-builder make
+        run: docker run --rm -v ${{ github.workspace }}:/project -w /project atv-builder make -f Makefile all
 
       - name: Upload .wps artifact
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
 
       - name: Compile plugin (DEBUG)
-        run: docker run --rm -v ${{ github.workspace }}:/project atv-builder make DEBUG=1
+        run: docker run --rm -v ${{ github.workspace }}:/project -w /project atv-builder make -f Makefile all DEBUG=1
 
       - name: Upload debug artifact
         uses: actions/upload-artifact@v4
