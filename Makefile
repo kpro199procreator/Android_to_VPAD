@@ -54,3 +54,6 @@ ifeq ($(wildcard $(WUPSDIR)/share/wups_rules),)
 $(error WUPSDIR not set or wups_rules not found at $(WUPSDIR)/share/wups_rules)
 endif
 include $(WUPSDIR)/share/wups_rules
+
+.PHONY: all
+all: $(TARGET).wps

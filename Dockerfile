@@ -8,14 +8,15 @@
 
 FROM ghcr.io/wiiu-env/devkitppc:20250608
 
+ENV DEVKITPRO=/opt/devkitpro
+ENV DEVKITPPC=/opt/devkitpro/devkitPPC
 ENV WUPSDIR=/opt/devkitpro/wups
 ENV WUT_ROOT=/opt/devkitpro/wut
+ENV PATH=$DEVKITPPC/bin:$PATH
 
 COPY --from=ghcr.io/wiiu-env/wiiupluginsystem:20240505  /artifacts $DEVKITPRO
 COPY --from=ghcr.io/wiiu-env/libnotifications:20240426  /artifacts $DEVKITPRO
 COPY --from=ghcr.io/wiiu-env/libfunctionpatcher:20230621 /artifacts $DEVKITPRO
 COPY --from=ghcr.io/wiiu-env/wiiumodulesystem:20250208  /artifacts $DEVKITPRO
-
-WORKDIR /project
 
 WORKDIR /project
